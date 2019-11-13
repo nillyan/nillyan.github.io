@@ -81,14 +81,20 @@
 
 
 
+<meta name="description" content="这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。Dict 主要结构Redis源码中对于hash结构的定义位于dict.h中，其中dict结构定义如下：1234567typedef struct dict &amp;#123;    dictType *type;    void *privdata;    dictht ht[2];    long">
 <meta name="keywords" content="hexo,javascript">
-<meta property="og:type" content="website">
-<meta property="og:title" content="story of nill">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="笔记-Redis 字典结构">
+<meta property="og:url" content="http://yoursite.com/2017/04/02/redis_字典实现笔记/index.html">
 <meta property="og:site_name" content="story of nill">
+<meta property="og:description" content="这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。Dict 主要结构Redis源码中对于hash结构的定义位于dict.h中，其中dict结构定义如下：1234567typedef struct dict &amp;#123;    dictType *type;    void *privdata;    dictht ht[2];    long">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://github.com/nillyan/nillyan.github.io/blob/master/blog/4e1551b0.png?raw=true">
+<meta property="og:updated_time" content="2019-11-13T13:35:15.584Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="story of nill">
+<meta name="twitter:title" content="笔记-Redis 字典结构">
+<meta name="twitter:description" content="这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。Dict 主要结构Redis源码中对于hash结构的定义位于dict.h中，其中dict结构定义如下：1234567typedef struct dict &amp;#123;    dictType *type;    void *privdata;    dictht ht[2];    long">
+<meta name="twitter:image" content="https://github.com/nillyan/nillyan.github.io/blob/master/blog/4e1551b0.png?raw=true">
 
 
 
@@ -118,13 +124,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/04/02/redis_字典实现笔记/"/>
 
 
 
 
 
-  <title>story of nill</title>
+  <title>笔记-Redis 字典结构 | story of nill</title>
   
 
 
@@ -143,8 +149,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -237,9 +242,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -269,9 +274,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/04/02/redis_字典实现笔记/" itemprop="url">笔记-Redis 字典结构</a></h1>
+          <h1 class="post-title" itemprop="name headline">笔记-Redis 字典结构</h1>
         
 
         <div class="post-meta">
@@ -321,9 +324,7 @@
       
 
       
-        
-          
-            <h4 id="这篇笔记主要记录Redis字典结构的主要实现，hash过程-解决hash冲突的方式以及rehash的过程。"><a href="#这篇笔记主要记录Redis字典结构的主要实现，hash过程-解决hash冲突的方式以及rehash的过程。" class="headerlink" title="这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。"></a>这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。</h4><h3 id="Dict-主要结构"><a href="#Dict-主要结构" class="headerlink" title="Dict 主要结构"></a>Dict 主要结构</h3><p>Redis源码中对于hash结构的定义位于dict.h中，其中dict结构定义如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">typedef struct dict &#123;</div><div class="line">    dictType *type;</div><div class="line">    void *privdata;</div><div class="line">    dictht ht[2];</div><div class="line">    long rehashidx; /* rehashing not in progress if rehashidx == -1 */</div><div class="line">    unsigned long iterators; /* number of iterators currently running */</div><div class="line">&#125; dict;</div></pre></td></tr></table></figure></p>
+        <h4 id="这篇笔记主要记录Redis字典结构的主要实现，hash过程-解决hash冲突的方式以及rehash的过程。"><a href="#这篇笔记主要记录Redis字典结构的主要实现，hash过程-解决hash冲突的方式以及rehash的过程。" class="headerlink" title="这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。"></a>这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。</h4><h3 id="Dict-主要结构"><a href="#Dict-主要结构" class="headerlink" title="Dict 主要结构"></a>Dict 主要结构</h3><p>Redis源码中对于hash结构的定义位于dict.h中，其中dict结构定义如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">typedef struct dict &#123;</div><div class="line">    dictType *type;</div><div class="line">    void *privdata;</div><div class="line">    dictht ht[2];</div><div class="line">    long rehashidx; /* rehashing not in progress if rehashidx == -1 */</div><div class="line">    unsigned long iterators; /* number of iterators currently running */</div><div class="line">&#125; dict;</div></pre></td></tr></table></figure></p>
 <p>该结构中有两个关键属性ht[2] 和rehashidx。</p>
 <ul>
 <li>ht属性是一个包含两个元素的数组，每个元素都是一个dictht哈希表。在非rehash阶段，redis的字典只会操作ht[0],当需要进行rehash操作时，才会同时使用到ht[1]。</li>
@@ -350,8 +351,6 @@
 <li>当ht[0]的全部节点都rehash到ht[1]时，交换ht[0]和ht[1]的指针，并将rehashidx设为-1。</li>
 </ol>
 
-          
-        
       
     </div>
     
@@ -368,131 +367,28 @@
       
 
       
-
-      
-
       
       
-        <div class="post-eof"></div>
+
       
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/01/new-article/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Nill Yan">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="story of nill">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/10/01/new-article/" itemprop="url">new article ds</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
             
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-01T23:36:07+08:00">
-                2016-10-01
-              </time>
+              <a href="/2016/10/01/new-article/" rel="next" title="new article ds">
+                <i class="fa fa-chevron-left"></i> new article ds
+              </a>
             
+          </div>
 
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
             
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -502,248 +398,11 @@
   </article>
 
 
-    
-      
 
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/10/4-10/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Nill Yan">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="story of nill">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/04/10/4-10/" itemprop="url">算法二</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-10T21:48:23+08:00">
-                2016-04-10
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
+    <div class="post-spread">
       
     </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
   </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/02/4-02-article/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Nill Yan">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="story of nill">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/04/02/4-02-article/" itemprop="url">算法一</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-02T22:08:07+08:00">
-                2016-04-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
-
-  
 
 
           </div>
@@ -751,6 +410,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -771,8 +434,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -832,6 +504,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#这篇笔记主要记录Redis字典结构的主要实现，hash过程-解决hash冲突的方式以及rehash的过程。"><span class="nav-number">1.</span> <span class="nav-text">这篇笔记主要记录Redis字典结构的主要实现，hash过程,解决hash冲突的方式以及rehash的过程。</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dict-主要结构"><span class="nav-number"></span> <span class="nav-text">Dict 主要结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hash过程"><span class="nav-number"></span> <span class="nav-text">Hash过程</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#关于hash算法——Redis4-0-0版本开始算法已经从MurmurHash2更改为SipHash。（关于hash算法相关的内容会在后面的笔记中讲到。）"><span class="nav-number">0.1.</span> <span class="nav-text">关于hash算法——Redis4.0.0版本开始算法已经从MurmurHash2更改为SipHash。（关于hash算法相关的内容会在后面的笔记中讲到。）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hash冲突"><span class="nav-number"></span> <span class="nav-text">Hash冲突</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Rehash过程"><span class="nav-number"></span> <span class="nav-text">Rehash过程</span></a></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -965,6 +653,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
 
   
 
