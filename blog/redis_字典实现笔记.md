@@ -180,12 +180,12 @@ static unsigned long _dictNextPower(unsigned long size) {
 
 总结一下流程大致如下：
 
-<div align=center><img src="https://github.com/nillyan/nillyan.github.io/blob/master/blog/4e1551b0.png?raw=true" width="50%" height="50%">
+<div align=center><img src="https://github.com/nillyan/nillyan.github.io/blob/master/blog/4e1551b0.png?raw=true" width="50%" height="50%"></div>
 
 1. 为ht[1]哈希表分配空间，空间大小与ht[0]当前的键值对数量有关（ht[0].used属性）：
 
-* 如果是扩展，那么ht[1].size为第一个大于等于ht[0].used*2的N 次方的数值；
-* 如果是收缩，那么ht[1].size为第一个大于等于ht[0].used的N 次方的数值。
+    - 如果是扩展，那么ht[1].size为第一个大于等于ht[0].used*2的N 次方的数值；
+    - 如果是收缩，那么ht[1].size为第一个大于等于ht[0].used的N 次方的数值。
 2. 此时字典同时拥有ht[0],ht[1]两个hash表。此时将rehashidx的值设置为0，表示rehash正式开始。
 3. 将ht[0]在rehashidx索引上的所有节点rehash到ht[1],当此次操作结束时，更新rehashidx的值+1。
 4. 整个rehash期间，对字典的delete,find,update操作会在两个哈希表上进行（先在ht[0]上查找，当找不到时再去ht[1]上查找）。而对字典的insert操作将统一保存到ht[1]里面。
